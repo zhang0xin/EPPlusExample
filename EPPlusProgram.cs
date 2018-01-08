@@ -36,7 +36,6 @@ namespace EPPlusExample
 			    sheet.Cells["k3:m3"].Style.Border.BorderAround(ExcelBorderStyle.Thin);
 			    sheet.Cells["k3:m3"].Value = "检修日期：                检修时间：       至";
 
-
 			    sheet.Cells["a4"].Style.Border.BorderAround(ExcelBorderStyle.Thin);
 			    sheet.Cells["a4"].Value = "序号";
 			    sheet.Cells["b4"].Style.Border.BorderAround(ExcelBorderStyle.Thin);
