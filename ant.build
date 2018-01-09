@@ -6,6 +6,7 @@
     <csc target="exe" output="bin/program.exe" debug="true">
       <sources>
         <include name="EPPlusProgram.cs" />
+        <include name="EPPlusHelper.cs" />
       </sources>
       <references>
         <include name="EPPlus.dll" />
@@ -14,6 +15,7 @@
     <copy todir="bin" flatten="true">
       <fileset>
         <include name="EPPlus.dll" />
+        <include name="template.xlsx" />
       </fileset>
     </copy>
   </target>
