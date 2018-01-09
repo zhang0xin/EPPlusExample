@@ -7,6 +7,9 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 using System;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using System.IO;
 
 namespace EPPlusExample
 {
@@ -20,7 +23,7 @@ namespace EPPlusExample
 			    sheet.Cells["a1:m1"].Style.Border.BorderAround(ExcelBorderStyle.Thin);
 			    sheet.Cells["a1:m1"].Merge = true;
 			    sheet.Cells["a1:m1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-			    sheet.Cells["a1:m1"].Value = "自动化系统检修计划表";
+			    sheet.Cells["a1:m1"].Value = "自动化系统检修计划表2";
 			    sheet.Cells["a2:m2"].Merge = true;
 			    sheet.Cells["a2:m2"].Style.Border.BorderAround(ExcelBorderStyle.Thin);
 			    sheet.Cells["a2:m2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;

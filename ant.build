@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<project name="EPPlusExample" default="run">
+  <target name="build">
+    <mkdir dir="bin" />
+    <csc target="exe" output="bin/program.exe" debug="true">
+      <sources>
+        <include name="EPPlusProgram.cs" />
+      </sources>
+      <references>
+        <include name="EPPlus.dll" />
+      </references>
+    </csc>
+    <copy todir="bin" flatten="true">
+      <fileset>
+        <include name="EPPlus.dll" />
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="run" depands="build">
+    <exec program="bin/program.exe" />
+  </target>
+</project>
