@@ -1,1 +1,1 @@
-puts "Hello Atom ！！！kkl,ddd"
+puts "Hello Atom ！！！kkl,dddddddd"
