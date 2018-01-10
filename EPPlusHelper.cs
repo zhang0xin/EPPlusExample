@@ -22,7 +22,7 @@ namespace EPPlusExample
       {
         if (package != null)
         {
-          code.AppendLine("ExcelWorksheet sheet");
+          code.AppendLine("ExcelWorksheet sheet;");
           foreach(var sheet in package.Workbook.Worksheets)
           {
             string codeCreateSheet = "sheet = package.Workbook.Worksheets.Add(\"{0}\");";
@@ -30,7 +30,8 @@ namespace EPPlusExample
             foreach(string address in GetAddressList(sheet))
             {
               string codeSetValue = "sheet.Cells[\"{0}\"].Value = \"{1}\";";
-              string cellValue = GetCellValue(sheet, address);
+              string cellValue = DistinctValue(sheet.Cells[address].Value)+"";
+              code.AppendLine(GenerateStyleCodes(sheet.Cells[address]));
               if (!string.IsNullOrEmpty(cellValue))
               {
                 if (sheet.MergedCells.Contains(address))
@@ -46,6 +47,63 @@ namespace EPPlusExample
       }
       return code.ToString();
     }
+    public string GenerateStyleCodes(ExcelRange range)
+    {
+      StringBuilder codes = new StringBuilder();
+      string codeFormat;
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Border.Left.Style = "+
+        " (ExcelBorderStyle) Enum.Parse(typeof(ExcelBorderStyle), \"{1}\");";
+      codes.AppendLine(string.Format(
+        codeFormat, range.Address, range.Style.Border.Left.Style));
+
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Border.Right.Style = "+
+        " (ExcelBorderStyle) Enum.Parse(typeof(ExcelBorderStyle), \"{1}\");";
+      codes.AppendLine(string.Format(
+        codeFormat, range.Address, range.Style.Border.Right.Style));
+
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Border.Top.Style = "+
+        " (ExcelBorderStyle) Enum.Parse(typeof(ExcelBorderStyle), \"{1}\");";
+      codes.AppendLine(string.Format(
+        codeFormat, range.Address, range.Style.Border.Top.Style));
+
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Border.Bottom.Style = "+
+        " (ExcelBorderStyle) Enum.Parse(typeof(ExcelBorderStyle), \"{1}\");";
+      codes.AppendLine(string.Format(
+        codeFormat, range.Address, range.Style.Border.Bottom.Style));
+
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Numberformat.Format = \"{1}\";";
+      codes.AppendLine(string.Format(
+        codeFormat, range.Address, EncodeCodeString(range.Style.Numberformat.Format)));
+
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Font.Bold = {1};";
+      codes.AppendLine(string.Format(
+        codeFormat, range.Address, range.Style.Font.Bold.ToString().ToLower()));
+
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Font.Size = {1};";
+      codes.AppendLine(string.Format(
+        codeFormat, range.Address, range.Style.Font.Size));
+
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Font.Name = \"{1}\";";
+      codes.AppendLine(string.Format(
+        codeFormat, range.Address, range.Style.Font.Name));
+
+      codeFormat = "sheet.Cells[\"{0}\"].Style.Font.Color.SetColor(Color.FromArgb({1}));";
+      if (!string.IsNullOrEmpty(range.Style.Font.Color.Rgb))
+      {
+        codes.AppendLine(string.Format(
+          codeFormat, range.Address, RgbToParameters(range.Style.Font.Color.Rgb)));
+      }
+      return codes.ToString();
+    }
+    public string RgbToParameters(string rgb)
+    {
+      //AARRGGBB 0xAA, 0xRR, 0xGG, 0xBB
+      return rgb.Insert(6, ", 0x").Insert(4, ", 0x").Insert(2, ", 0x").Insert(0, "0x");
+    }
+    public string EncodeCodeString(string codes)
+    {
+      return codes.Replace(@"\", @"\\").Replace("\"", "\\\"");
+    }
     public ICollection<string> GetAddressList(ExcelWorksheet sheet)
     {
       List<string> addressList = new List<string>();
@@ -60,14 +118,13 @@ namespace EPPlusExample
       }
       return addressList;
     }
-    public string GetCellValue(ExcelWorksheet sheet, string address)
+    public object DistinctValue(object val)
     {
-      var val = sheet.Cells[address].Value;
       var arr = val as object[,];
       if (arr != null && arr.GetLength(0) > 0 && arr.GetLength(1) > 0)
-        return arr[0,0] + "";
+        return arr[0,0];
       else
-        return val + "";
+        return val;
     }
   }
 }

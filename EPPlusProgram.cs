@@ -22,42 +22,51 @@ namespace EPPlusExample
 		public static void Main(string[] args)
 		{
 			EPPlusHelper eppHelper = new EPPlusHelper("template.xlsx");
-
-			ExecuteCodes(eppHelper.GenerateCode());
+			string codes = eppHelper.GenerateCode();
+			Console.WriteLine(codes);
+			ExecuteCodes(codes);
 			//MakeExampleExcel();
 	  }
 		public static void ExecuteCodes(string codes){
 			string wrapperCodes = @"
 				using System;
+				using OfficeOpenXml;
+				using OfficeOpenXml.Style;
+				using System.IO;
+				using System.Drawing;
+
 				namespace DynamicCodes{
 					class CodeWrapper {
 						public static void Execute(){
-							using (ExcelPackage package = new ExcelPackage{
+							using (ExcelPackage package = new ExcelPackage()){
 								"+codes+@"
-							}
-							using (Stream stream = new FileStream(""./example.xlsx"", FileMode.Create)){
+								using (Stream stream = new FileStream(""./output.xlsx"", FileMode.Create)){
 					        package.SaveAs(stream);
-					    }
+					    	}
+							}
 						}
 					}
 				}
 			";
 			CompilerParameters parameters = new CompilerParameters();
 			parameters.ReferencedAssemblies.Add("System.dll");
+			parameters.ReferencedAssemblies.Add("EPPlus.dll");
+			parameters.ReferencedAssemblies.Add("System.Drawing.dll");
 			parameters.GenerateExecutable = false;
 			parameters.GenerateInMemory = true;
 			CompilerResults results = (new CSharpCodeProvider()).CompileAssemblyFromSource(parameters, wrapperCodes);
 			if (results.Errors.HasErrors)
 			{
+				//Console.WriteLine(wrapperCodes);
 				foreach(CompilerError error in results.Errors)
 				{
-					Console.WriteLine(error.ErrorText);
+					Console.WriteLine(error.ToString());
 				}
 			}
 			else
 			{
 				Type type = results.CompiledAssembly.GetType("DynamicCodes.CodeWrapper");
-				type.GetMethod("").Invoke(null, null);
+				type.GetMethod("Execute").Invoke(null, null);
 			}
 		}
 		public static void MakeExampleExcel(){
