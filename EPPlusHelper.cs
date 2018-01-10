@@ -44,7 +44,6 @@ namespace EPPlusExample
           }
         }
       }
-      Console.Write(code);
       return code.ToString();
     }
     public ICollection<string> GetAddressList(ExcelWorksheet sheet)
