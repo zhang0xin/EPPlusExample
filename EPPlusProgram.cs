@@ -22,32 +22,16 @@ namespace EPPlusExample
 		public static void Main(string[] args)
 		{
 			EPPlusHelper eppHelper = new EPPlusHelper("template.xlsx");
-			string codes = eppHelper.GenerateCode();
-			Console.WriteLine(codes);
+			string codes = eppHelper.GenerateExecutableCode();
+
+	    StreamWriter writer = new StreamWriter("CodeWrapper.cs");
+	    writer.Write(codes);
+			writer.Close();
+
 			ExecuteCodes(codes);
 			//MakeExampleExcel();
 	  }
 		public static void ExecuteCodes(string codes){
-			string wrapperCodes = @"
-				using System;
-				using OfficeOpenXml;
-				using OfficeOpenXml.Style;
-				using System.IO;
-				using System.Drawing;
-
-				namespace DynamicCodes{
-					class CodeWrapper {
-						public static void Execute(){
-							using (ExcelPackage package = new ExcelPackage()){
-								"+codes+@"
-								using (Stream stream = new FileStream(""./output.xlsx"", FileMode.Create)){
-					        package.SaveAs(stream);
-					    	}
-							}
-						}
-					}
-				}
-			";
 			CompilerParameters parameters = new CompilerParameters();
 			parameters.ReferencedAssemblies.Add("System.dll");
 			parameters.ReferencedAssemblies.Add("EPPlus.dll");
@@ -55,7 +39,7 @@ namespace EPPlusExample
 			parameters.GenerateExecutable = false;
 			parameters.GenerateInMemory = true;
 			CompilerResults results =
-				(new CSharpCodeProvider()).CompileAssemblyFromSource(parameters, wrapperCodes);
+				(new CSharpCodeProvider()).CompileAssemblyFromSource(parameters, codes);
 			if (results.Errors.HasErrors)
 			{
 				//Console.WriteLine(wrapperCodes);

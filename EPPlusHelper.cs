@@ -15,6 +15,29 @@ namespace EPPlusExample
     {
       this.excelFile = excelFile;
     }
+    public string GenerateExecutableCode()
+    {
+      return
+      @"using System;
+				using OfficeOpenXml;
+				using OfficeOpenXml.Style;
+				using System.IO;
+				using System.Drawing;
+
+				namespace DynamicCodes{
+					class CodeWrapper {
+						public static void Execute(){
+							using (ExcelPackage package = new ExcelPackage()){
+								"+GenerateCode()+@"
+								using (Stream stream = new FileStream(""./output.xlsx"", FileMode.Create)){
+					        package.SaveAs(stream);
+					    	}
+							}
+						}
+					}
+				}
+			";
+    }
     public string GenerateCode()
     {
       StringBuilder code = new StringBuilder();
@@ -51,7 +74,7 @@ namespace EPPlusExample
                   string codeSetMerged = "sheet.Cells[\"{0}\"].Merge = true;";
                   code.AppendLine(string.Format(codeSetMerged, address));
                 }
-                code.AppendLine(string.Format(codeSetValue, address, cellValue));
+                code.AppendLine(string.Format(codeSetValue, address, EncodeCodeString(cellValue)));
               }
             }
           }
