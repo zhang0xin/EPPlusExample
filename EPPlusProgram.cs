@@ -54,7 +54,8 @@ namespace EPPlusExample
 			parameters.ReferencedAssemblies.Add("System.Drawing.dll");
 			parameters.GenerateExecutable = false;
 			parameters.GenerateInMemory = true;
-			CompilerResults results = (new CSharpCodeProvider()).CompileAssemblyFromSource(parameters, wrapperCodes);
+			CompilerResults results =
+				(new CSharpCodeProvider()).CompileAssemblyFromSource(parameters, wrapperCodes);
 			if (results.Errors.HasErrors)
 			{
 				//Console.WriteLine(wrapperCodes);

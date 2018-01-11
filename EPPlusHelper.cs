@@ -18,20 +18,32 @@ namespace EPPlusExample
     public string GenerateCode()
     {
       StringBuilder code = new StringBuilder();
-      using(ExcelPackage package = new ExcelPackage(new FileStream(excelFile, FileMode.Open)))
+      using(ExcelPackage package =
+        new ExcelPackage(new FileStream(excelFile, FileMode.Open)))
       {
         if (package != null)
         {
           code.AppendLine("ExcelWorksheet sheet;");
           foreach(var sheet in package.Workbook.Worksheets)
           {
-            string codeCreateSheet = "sheet = package.Workbook.Worksheets.Add(\"{0}\");";
+            string codeCreateSheet =
+              "sheet = package.Workbook.Worksheets.Add(\"{0}\");";
             code.AppendLine(string.Format(codeCreateSheet, sheet.Name));
+            for(int i=sheet.Dimension.Start.Row; i<=sheet.Dimension.End.Row; i++)
+            {
+              string codeSetHeight = "sheet.Row({0}).Height = {1};";
+              code.AppendLine(string.Format(codeSetHeight, i, sheet.Row(i).Height));
+            }
+            for(int i=sheet.Dimension.Start.Column; i<=sheet.Dimension.End.Column; i++)
+            {
+              string codeSetWidth = "sheet.Column({0}).Width = {1};";
+              code.AppendLine(string.Format(codeSetWidth, i, sheet.Column(i).Width));
+            }
             foreach(string address in GetAddressList(sheet))
             {
               string codeSetValue = "sheet.Cells[\"{0}\"].Value = \"{1}\";";
               string cellValue = DistinctValue(sheet.Cells[address].Value)+"";
-              code.AppendLine(GenerateStyleCodes(sheet.Cells[address]));
+              code.AppendLine(GenerateCellStyleCodes(sheet.Cells[address]));
               if (!string.IsNullOrEmpty(cellValue))
               {
                 if (sheet.MergedCells.Contains(address))
@@ -47,57 +59,108 @@ namespace EPPlusExample
       }
       return code.ToString();
     }
-    public string GenerateStyleCodes(ExcelRange range)
+    public string GenerateRowStyleCodes(ExcelRow row)
+    {
+      return GenerateStyleCodes("sheet.Row("+row.Row+")", row.Style);
+    }
+    public string GenerateCellStyleCodes(ExcelRange range)
+    {
+      return GenerateStyleCodes("sheet.Cells[\"" + range.Address + "\"]", range.Style);
+    }
+    public string GenerateStyleCodes(string stylePrefix, ExcelStyle style)
     {
       StringBuilder codes = new StringBuilder();
       string codeFormat;
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Border.Left.Style = "+
+      codeFormat = "{0}.Style.Border.Left.Style = "+
         " (ExcelBorderStyle) Enum.Parse(typeof(ExcelBorderStyle), \"{1}\");";
       codes.AppendLine(string.Format(
-        codeFormat, range.Address, range.Style.Border.Left.Style));
+        codeFormat, stylePrefix, style.Border.Left.Style));
 
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Border.Right.Style = "+
+      codeFormat = "{0}.Style.Border.Right.Style = "+
         " (ExcelBorderStyle) Enum.Parse(typeof(ExcelBorderStyle), \"{1}\");";
       codes.AppendLine(string.Format(
-        codeFormat, range.Address, range.Style.Border.Right.Style));
+        codeFormat, stylePrefix, style.Border.Right.Style));
 
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Border.Top.Style = "+
+      codeFormat = "{0}.Style.Border.Top.Style = "+
         " (ExcelBorderStyle) Enum.Parse(typeof(ExcelBorderStyle), \"{1}\");";
       codes.AppendLine(string.Format(
-        codeFormat, range.Address, range.Style.Border.Top.Style));
+        codeFormat, stylePrefix, style.Border.Top.Style));
 
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Border.Bottom.Style = "+
+      codeFormat = "{0}.Style.Border.Bottom.Style = "+
         " (ExcelBorderStyle) Enum.Parse(typeof(ExcelBorderStyle), \"{1}\");";
       codes.AppendLine(string.Format(
-        codeFormat, range.Address, range.Style.Border.Bottom.Style));
+        codeFormat, stylePrefix, style.Border.Bottom.Style));
 
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Numberformat.Format = \"{1}\";";
+      codeFormat = "{0}.Style.Numberformat.Format = \"{1}\";";
       codes.AppendLine(string.Format(
-        codeFormat, range.Address, EncodeCodeString(range.Style.Numberformat.Format)));
+        codeFormat, stylePrefix, EncodeCodeString(style.Numberformat.Format)));
 
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Font.Bold = {1};";
+      codeFormat = "{0}.Style.Font.Bold = {1};";
       codes.AppendLine(string.Format(
-        codeFormat, range.Address, range.Style.Font.Bold.ToString().ToLower()));
+        codeFormat, stylePrefix, style.Font.Bold.ToString().ToLower()));
 
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Font.Size = {1};";
+      codeFormat = "{0}.Style.Font.Size = {1};";
       codes.AppendLine(string.Format(
-        codeFormat, range.Address, range.Style.Font.Size));
+        codeFormat, stylePrefix, style.Font.Size));
 
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Font.Name = \"{1}\";";
+      codeFormat = "{0}.Style.Font.Name = \"{1}\";";
       codes.AppendLine(string.Format(
-        codeFormat, range.Address, range.Style.Font.Name));
+        codeFormat, stylePrefix, style.Font.Name));
 
-      codeFormat = "sheet.Cells[\"{0}\"].Style.Font.Color.SetColor(Color.FromArgb({1}));";
-      if (!string.IsNullOrEmpty(range.Style.Font.Color.Rgb))
+      codeFormat = "{0}.Style.Font.Color.SetColor(Color.FromArgb({1}));";
+      if (!string.IsNullOrEmpty(style.Font.Color.Rgb))
       {
         codes.AppendLine(string.Format(
-          codeFormat, range.Address, RgbToParameters(range.Style.Font.Color.Rgb)));
+          codeFormat, stylePrefix, RgbToParameters(style.Font.Color.Rgb)));
       }
+
+      codeFormat = "{0}.Style.Fill.PatternType = "+
+          " (ExcelFillStyle) Enum.Parse(typeof(ExcelFillStyle), \"{1}\");";
+      codes.AppendLine(string.Format(
+        codeFormat, stylePrefix, style.Fill.PatternType));
+      if (!string.IsNullOrEmpty(style.Fill.BackgroundColor.Rgb))
+      {
+        codeFormat = "{0}.Style.Fill.BackgroundColor.SetColor(Color.FromArgb({1}));";
+        codes.AppendLine(string.Format(
+          codeFormat, stylePrefix, RgbToParameters(style.Fill.BackgroundColor.Rgb)));
+      }
+
+      codeFormat = "{0}.Style.VerticalAlignment = "+
+          " (ExcelVerticalAlignment) Enum.Parse(typeof(ExcelVerticalAlignment), \"{1}\");";
+      codes.AppendLine(string.Format(
+        codeFormat, stylePrefix, style.VerticalAlignment));
+
+      codeFormat = "{0}.Style.HorizontalAlignment = "+
+          " (ExcelHorizontalAlignment) Enum.Parse(typeof(ExcelHorizontalAlignment), \"{1}\");";
+      codes.AppendLine(string.Format(
+        codeFormat, stylePrefix, style.HorizontalAlignment));
+
+      codeFormat = "{0}.Style.WrapText = {1};";
+      codes.AppendLine(string.Format(
+        codeFormat, stylePrefix, style.WrapText.ToString().ToLower()));
+
+      codeFormat = "{0}.Style.ReadingOrder = "+
+          " (ExcelReadingOrder) Enum.Parse(typeof(ExcelReadingOrder), \"{1}\");";
+      codes.AppendLine(string.Format(
+        codeFormat, stylePrefix, style.ReadingOrder));
+
+      codeFormat = "{0}.Style.WrapText = {1};";
+      codes.AppendLine(string.Format(
+        codeFormat, stylePrefix, style.WrapText.ToString().ToLower()));
+
+      codeFormat = "{0}.Style.ShrinkToFit = {1};";
+      codes.AppendLine(string.Format(
+        codeFormat, stylePrefix, style.ShrinkToFit.ToString().ToLower()));
+
+      codeFormat = "{0}.Style.Indent = {1};";
+      codes.AppendLine(string.Format(
+        codeFormat, stylePrefix, style.Indent));
+
       return codes.ToString();
     }
     public string RgbToParameters(string rgb)
     {
-      //AARRGGBB 0xAA, 0xRR, 0xGG, 0xBB
+      //AARRGGBB -> 0xAA, 0xRR, 0xGG, 0xBB
       return rgb.Insert(6, ", 0x").Insert(4, ", 0x").Insert(2, ", 0x").Insert(0, "0x");
     }
     public string EncodeCodeString(string codes)
