@@ -15,6 +15,16 @@ namespace EPPlusExample
     {
       this.excelFile = excelFile;
     }
+    
+    public Stream ExecuteTemplate(string fileName, TemplateData data)
+    {
+      return ExecuteTemplate(fileName, data);
+    }
+    public Stream ExecuteTemplate(Stream template, TemplateData data)
+    {
+      return null;
+    }
+
     public string GenerateExecutableCode()
     {
       return
